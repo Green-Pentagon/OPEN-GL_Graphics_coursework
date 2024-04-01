@@ -56,8 +56,8 @@ void Camera::calculateMatrices(GLFWwindow *window, const float deltaTime)
     
     // Update camera vectors
     front = MyLib::Normalise(glm::vec3(sin(yaw) * cos(pitch), sin(pitch), -cos(yaw) * cos(pitch)));
-    right = MyLib::Normalise(glm::cross(front, worldUp));
-    up = MyLib::Normalise(glm::cross(right, front));
+    right = MyLib::Normalise(MyLib::Cross(front, worldUp));
+    up = MyLib::Normalise(MyLib::Cross(right, front));
     target = position + front;
     
     // Calculate view matrix
