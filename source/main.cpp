@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/io.hpp>
 
+#include "MyLib.h"
 #include "shader.hpp"
 #include "camera.hpp"
 #include "model.hpp"
@@ -167,7 +168,7 @@ int main( void )
 	spotLight.ambient = ka * white;
 	spotLight.diffuse = kd * white;
 	spotLight.specular = ks * white;
-	spotLight.cosPhi = cos(glm::radians(45.0f));
+	spotLight.cosPhi = cos(MyLib::Radians(45.0f));
 	spotLight.constant = 1.0f;
 	spotLight.linear = 0.1f;
 	spotLight.quadratic = 0.02f;
@@ -261,7 +262,7 @@ int main( void )
 			glUniform1f(glGetUniformLocation(shaderID, ("spotLights[" + number + "].quadratic").c_str()), spotLights[i].quadratic);
 		}
 
-		// Send directional light to the shader
+		// Send directional lights to the shader
 		glUniform1i(glGetUniformLocation(shaderID, "numDirLights"), static_cast<unsigned int>(dirLights.size()));
 		for (unsigned int i = 0; i < dirLights.size(); i++)
 		{
@@ -277,10 +278,7 @@ int main( void )
 		for (unsigned int i = 0; i < 10; i++)
 		{
 			// Calculate model matrix
-			glm::mat4 translate = glm::translate(glm::mat4(1.0f), positions[i]);
-			glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
-			glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), 30.0f * i, glm::vec3(1.0f));
-			glm::mat4 model = translate * rotate * scale;
+			glm::mat4 model = MyLib::Transform(glm::mat4(1.0f), positions[i], glm::vec3(1.0f), 30.0f * i, glm::vec3(1.0f));
 
 			// Send the model matrix to the shader
 			glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &model[0][0]);
@@ -302,10 +300,8 @@ int main( void )
 		for (unsigned int i = 0; i < lights.size(); i++)
 		{
 			// Calculate model matrix
-			glm::mat4 translate = glm::translate(glm::mat4(1.0f), lights[i].position);
-			glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
-			glm::mat4 model = translate * scale;
-
+			glm::mat4 model = MyLib::Transform(glm::mat4(1.0f), lights[i].position, glm::vec3(1.0f), 0.0f, glm::vec3(0.2f));
+			
 			// Send model, view, projection matrices and light colour to light shader
 			glUniformMatrix4fv(glGetUniformLocation(lightShaderID, "model"), 1, GL_FALSE, &model[0][0]);
 			glUniformMatrix4fv(glGetUniformLocation(lightShaderID, "view"), 1, GL_FALSE, &view[0][0]);
@@ -320,9 +316,7 @@ int main( void )
 		for (unsigned int i = 0; i < spotLights.size(); i++)
 		{
 			// Calculate model matrix
-			glm::mat4 translate = glm::translate(glm::mat4(1.0f), spotLights[i].position);
-			glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
-			glm::mat4 model = translate * scale;
+			glm::mat4 model = MyLib::Transform(glm::mat4(1.0f), spotLights[i].position, glm::vec3(1.0f), 0.0f, glm::vec3(0.2f));
 
 			// Send model, view, projection matrices and light colour to light shader
 			glUniformMatrix4fv(glGetUniformLocation(lightShaderID, "model"), 1, GL_FALSE, &model[0][0]);

@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "camera.hpp"
+#include "MyLib.h"
 
 Camera::Camera(const glm::vec3 Position)
 {
@@ -54,14 +55,14 @@ void Camera::calculateMatrices(GLFWwindow *window, const float deltaTime)
     pitch += mouseSpeed * float(yPos - 768/2);
     
     // Update camera vectors
-    front = glm::normalize(glm::vec3(sin(yaw) * cos(pitch), sin(pitch), -cos(yaw) * cos(pitch)));
-    right = glm::normalize(glm::cross(front, worldUp));
-    up = glm::normalize(glm::cross(right, front));
+    front = MyLib::Normalise(glm::vec3(sin(yaw) * cos(pitch), sin(pitch), -cos(yaw) * cos(pitch)));
+    right = MyLib::Normalise(glm::cross(front, worldUp));
+    up = MyLib::Normalise(glm::cross(right, front));
     target = position + front;
     
     // Calculate view matrix
-    view = glm::lookAt(position, position + front, up);
+    view = MyLib::LookAt(position, position + front, up);
     
     // Calculate projection matrix
-    projection = glm::perspective(fov, aspect, near, far);
+    projection = MyLib::Perspective(fov, aspect, near, far);
 }

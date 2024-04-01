@@ -2,13 +2,14 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include "MyLib.h"
 
 class Camera
 {
     
 public:
     // Projection parameters
-    float fov = glm::radians(45.0f);
+    float fov = MyLib::Radians(45.0f);
     float aspect = 1024.0f / 768.0f;
     float near = 0.02f;
     float far = 100.0f;
