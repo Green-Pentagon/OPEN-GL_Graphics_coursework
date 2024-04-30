@@ -1,41 +1,43 @@
 #include <vector>
-#include <stdio.h>
 #include <string>
 #include <cstring>
 #include <iostream>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/io.hpp>
 
 #include "model.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.hpp"
 
+// Constructor
 Model::Model(const char *path)
 {
     // Load object
-    bool res = loadObj(path, vertices, uvs, normals);
+    loadObj(path);
     
+    // Add neutral textures
+    addTexture("../objects/neutral_normal.png", "normal");
+    addTexture("../objects/neutral_specular.png", "specular");
+
+    // Calculate tangent and bitangent vectors
+    calculateTangents();
+
     // Setup buffers
     setupBuffers();
 }
 
+// Draw the model
 void Model::draw(GLuint &shaderID)
 {
     // Bind the textures
-    unsigned int diffuseNum = 1;
-    unsigned int normalNum = 1;
     for (unsigned int i = 0; i < textures.size(); i++)
     {
-        std::string number;
-        std::string name = textures[i].type;
-        if (name == "diffuse")
-            number = std::to_string(diffuseNum++);
-        else if (name == "normal")
-            number = std::to_string(normalNum++);
-        
         // Bind texture
         glActiveTexture(GL_TEXTURE0 + i);
-        glUniform1i(glGetUniformLocation(shaderID, (name + number).c_str()), i);
+        glUniform1i(glGetUniformLocation(shaderID, (textures[i].type + "Map").c_str()), i);
         glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
     
@@ -43,8 +45,19 @@ void Model::draw(GLuint &shaderID)
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, static_cast<unsigned int>(vertices.size()));
     glBindVertexArray(0);
+    
+    // Reset active texture
+    glActiveTexture(GL_TEXTURE0);
+    
+    // Disable the vertex arrays
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(3);
+    glDisableVertexAttribArray(4);
 }
 
+// Setup and copy data to the buffers
 void Model::setupBuffers()
 {    
     // Create and bind the Vertex Array Object (VAO)
@@ -68,7 +81,7 @@ void Model::setupBuffers()
     glGenBuffers(1, &normalBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
-    
+   
     // Bind the vertex buffer
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -84,22 +97,35 @@ void Model::setupBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     
+    // Create tangent buffer
+    GLuint tangentBuffer;
+    glGenBuffers(1, &tangentBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, tangentBuffer);
+    glBufferData(GL_ARRAY_BUFFER, tangents.size() * sizeof(glm::vec3), &tangents[0], GL_STATIC_DRAW);
+
+    // Create bitangent buffer
+    GLuint bitangentBuffer;
+    glGenBuffers(1, &bitangentBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, bitangentBuffer);
+    glBufferData(GL_ARRAY_BUFFER, bitangents.size() * sizeof(glm::vec3), &bitangents[0], GL_STATIC_DRAW);
+
+    // Bind the tangent buffer
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, tangentBuffer);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+    // Bind the bitangent buffer
+    glEnableVertexAttribArray(4);
+    glBindBuffer(GL_ARRAY_BUFFER, bitangentBuffer);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+
      // Unbind the VAO
     glBindVertexArray(0);
 }
 
-void Model::deleteBuffers()
-{
-    glDeleteBuffers(1, &vertexBuffer);
-    glDeleteBuffers(1, &uvBuffer);
-    glDeleteBuffers(1, &normalBuffer);
-    glDeleteVertexArrays(1, &VAO);
-}
-
-bool Model::loadObj(const char *path,
-                    std::vector<glm::vec3> &outVertices,
-                    std::vector<glm::vec2> &outUVs,
-                    std::vector<glm::vec3> &outNormals)
+// Load an .obj model
+bool Model::loadObj(const char *path)
 {
     
     printf("Loading file %s\n", path);
@@ -198,17 +224,16 @@ bool Model::loadObj(const char *path,
         glm::vec3 normal = tempNormals[normalIndex - 1];
         
         // Copy the attributes to the buffers
-        outVertices.push_back(vertex);
-        outUVs.push_back(uv);
-        outNormals.push_back(normal);
+        vertices.push_back(vertex);
+        uvs.push_back(uv);
+        normals.push_back(normal);
     }
     
     // Close .obj file
     fclose(file);
-    
-    return true;
 }
 
+// Add textures to the model
 void Model::addTexture(const char *path, const std::string type)
 {
     Texture texture;
@@ -217,14 +242,16 @@ void Model::addTexture(const char *path, const std::string type)
     textures.push_back(texture);
 }
 
+// Load texture from file (using stb_image)
 unsigned int Model::loadTexture(const char *path)
 {
 
     unsigned int textureID;
     glGenTextures(1, &textureID);
-
     int width, height, numComponents;
+    stbi_set_flip_vertically_on_load(true);  
     unsigned char *data = stbi_load(path, &width, &height, &numComponents, 0);
+    
     if (data)
     {
         GLenum format;
@@ -234,7 +261,7 @@ unsigned int Model::loadTexture(const char *path)
             format = GL_RGB;
         else if (numComponents == 4)
             format = GL_RGBA;
-
+        
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -252,4 +279,31 @@ unsigned int Model::loadTexture(const char *path)
     }
 
     return textureID;
+}
+
+void Model::calculateTangents()
+{
+    for (unsigned int i = 0; i < vertices.size(); i += 3)
+    {
+        // Calculate edge vectors and deltas
+        glm::vec3 E1 = vertices[i + 1] - vertices[i];
+        glm::vec3 E2 = vertices[i + 2] - vertices[i + 1];
+        float deltaU1 = uvs[i + 1].x - uvs[i].x;
+        float deltaV1 = uvs[i + 1].y - uvs[i].y;
+        float deltaU2 = uvs[i + 2].x - uvs[i + 1].x;
+        float deltaV2 = uvs[i + 2].y - uvs[i + 1].y;
+
+        // Calculate tangents
+        float fact = 1.0f / (deltaU1 * deltaV2 - deltaU2 * deltaV1);
+        glm::vec3 tangent = fact * (deltaV2 * E1 - deltaV1 * E2);
+        glm::vec3 bitangent = fact * (deltaU1 * E2 - deltaU2 * E1);
+
+        // Set the same tangents for the three vertices of the triangle
+        tangents.push_back(tangent);
+        tangents.push_back(tangent);
+        tangents.push_back(tangent);
+        bitangents.push_back(bitangent);
+        bitangents.push_back(bitangent);
+        bitangents.push_back(bitangent);
+    }
 }

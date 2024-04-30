@@ -8,7 +8,6 @@
 
 #include "model.hpp"
 #include "light.hpp"
-#include "MyLib.h"
 
 void Light::addPointLight(const glm::vec3 Position, const glm::vec3 Colour)
 {
@@ -71,8 +70,8 @@ void Light::draw(glm::mat4 view, glm::mat4 projection, Model lightModel)
             continue;
         
         // Calculate model matrix
-        glm::mat4 translate = MyLib::Translate(glm::mat4(1.0f), lights[i].position);
-        glm::mat4 scale = MyLib::Scale(glm::mat4(1.0f), glm::vec3(0.2f));
+        glm::mat4 translate = glm::translate(glm::mat4(1.0f), lights[i].position);
+        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
         glm::mat4 model = translate * scale;
         
         // Send model, view, projection matrices and light colour to light shader

@@ -3,7 +3,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "camera.hpp"
-#include "MyLib.h"
 
 Camera::Camera(const glm::vec3 Position)
 {
@@ -29,21 +28,16 @@ void Camera::calculateMatrices(GLFWwindow *window, const float deltaTime)
 {
     // Keyboard inputs
     if (glfwGetKey(window, GLFW_KEY_W))
-    {
         position += front * deltaTime * speed;
-    }
+
     if (glfwGetKey(window, GLFW_KEY_S))
-    {
         position -= front * deltaTime * speed;
-    }
+
     if (glfwGetKey(window, GLFW_KEY_A))
-    {
         position -= right * deltaTime * speed;
-    }
+
     if (glfwGetKey(window, GLFW_KEY_D))
-    {
         position += right * deltaTime * speed;
-    }
     
     // Get mouse cursor position
     double xPos, yPos;
@@ -55,14 +49,14 @@ void Camera::calculateMatrices(GLFWwindow *window, const float deltaTime)
     pitch += mouseSpeed * float(yPos - 768/2);
     
     // Update camera vectors
-    front = MyLib::Normalise(glm::vec3(sin(yaw) * cos(pitch), sin(pitch), -cos(yaw) * cos(pitch)));
-    right = MyLib::Normalise(MyLib::Cross(front, worldUp));
-    up = MyLib::Normalise(MyLib::Cross(right, front));
+    front = glm::normalize(glm::vec3(sin(yaw) * cos(pitch), sin(pitch), -cos(yaw) * cos(pitch)));
+    right = glm::normalize(glm::cross(front, worldUp));
+    up = glm::normalize(glm::cross(right, front));
     target = position + front;
     
     // Calculate view matrix
-    view = MyLib::LookAt(position, position + front, up);
+    view = glm::lookAt(position, position + front, up);
     
     // Calculate projection matrix
-    projection = MyLib::Perspective(fov, aspect, near, far);
+    projection = glm::perspective(fov, aspect, near, far);
 }
