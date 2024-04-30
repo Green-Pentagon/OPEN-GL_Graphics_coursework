@@ -91,6 +91,7 @@ int main( void )
 
     // Compile shader programs
     GLuint shaderID = LoadShaders("normalMapVertexShader.vert", "normalMapFragmentShader.frag");
+
     
     // Load models
     Model teapot("../objects/teapot.obj");
@@ -101,7 +102,7 @@ int main( void )
 
     // Add textures to models
     suzanne.addTexture("../objects/suzanne_diffuse.png", "diffuse");
-    //suzanne.addTexture("../objects/suzanne_normal.png", "normal");
+    suzanne.addTexture("../objects/suzanne_normal.png", "normal");
 
     teapot.addTexture("../objects/blue_diffuse.bmp", "diffuse");
     teapot.addTexture("../objects/diamond_normal.png", "normal");
@@ -130,19 +131,7 @@ int main( void )
     object.position = glm::vec3(0.0f, 4.0f, -2.0f);
     objects.push_back(object);
 
-    // Specify world space object positions
-    glm::vec3 positions[] = {
-        glm::vec3( 0.0f,  0.0f,  0.0f),
-        glm::vec3( 2.0f,  5.0f, -10.0f),
-        glm::vec3(-3.0f, -2.0f, -4.0f),
-        glm::vec3(-4.0f, -2.0f, -8.0f),
-        glm::vec3( 2.0f, -1.0f, -4.0f),
-        glm::vec3(-4.0f,  3.0f, -10.0f),
-        glm::vec3( 0.0f, -2.0f, -8.0f),
-        glm::vec3( 4.0f,  2.0f, -6.0f),
-        glm::vec3( 3.0f,  0.0f, -1.0f),
-        glm::vec3(-1.0f,  1.0f, -2.0f)
-    };
+
     
     // Define light colours
     glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -203,10 +192,13 @@ int main( void )
 
         // Activate shader
         glUseProgram(shaderID);
+
         
         // Send camera position, view and projection matrices to the shader
         glUniformMatrix4fv(glGetUniformLocation(shaderID, "view"), 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shaderID, "projection"), 1, GL_FALSE, &projection[0][0]);
+
+
 
         // Send light source properties to the shader
         lightSources.toShader(shaderID);
@@ -250,8 +242,8 @@ int main( void )
             // Send the model matrix to the shader
             glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &model[0][0]);
 
-            // Draw the model
             suzanne.draw(shaderID);
+
         }
 
         // Draw the light sources
