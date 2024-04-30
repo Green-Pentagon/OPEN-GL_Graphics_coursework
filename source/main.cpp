@@ -12,6 +12,7 @@
 #include "camera.hpp"
 #include "model.hpp"
 #include "light.hpp"
+#include "maths.hpp"
 
 // Create camera object
 Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
@@ -96,17 +97,21 @@ int main( void )
     Model lightModel("../objects/sphere.obj");
     Model floor("../objects/flat_plane.obj");
     Model wall("../objects/wall.obj");
+    Model suzanne("../objects/suzanne.obj");
 
     // Add textures to models
+    suzanne.addTexture("../objects/suzanne_diffuse.png", "diffuse");
+    //suzanne.addTexture("../objects/suzanne_normal.png", "normal");
+
     teapot.addTexture("../objects/blue_diffuse.bmp", "diffuse");
     teapot.addTexture("../objects/diamond_normal.png", "normal");
     floor.addTexture("../objects/stones_diffuse.png", "diffuse");
     floor.addTexture("../objects/stones_normal.png", "normal");
     floor.addTexture("../objects/stones_specular.png", "specular");
-
     wall.addTexture("../objects/bricks_diffuse.png", "diffuse");
     wall.addTexture("../objects/bricks_normal.png", "normal");
     wall.addTexture("../objects/bricks_specular.png", "specular");
+    
 
     // Define objects
     std::vector<Object> objects;
@@ -165,8 +170,34 @@ int main( void )
         // Clear the window
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Get the view and projection matrices from the camera library
-        camera.calculateMatrices(window, deltaTime);
+        // Toggle between first and third person camera
+        if (glfwGetKey(window, GLFW_KEY_1) && camera.mode == "third")
+        {
+            camera.mode = "first";
+            camera.yaw = camera.charYaw;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_2) && camera.mode == "first")
+        {
+            camera.mode = "third";
+            camera.charYaw = camera.yaw;
+        }
+
+        //// Get the view and projection matrices from the camera library
+        //camera.calculateMatrices(window, deltaTime);
+        //glm::mat4 view = camera.getViewMatrix();
+        //glm::mat4 projection = camera.getProjectionMatrix();
+
+        // Calculate view and projection matrices
+        if (camera.mode == "first")
+        {
+            camera.calculateMatrices(window, deltaTime);
+        }
+        else if (camera.mode == "third")
+        {
+            camera.thirdPersonCamera(window, deltaTime);
+        }
+           
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
 
@@ -207,9 +238,25 @@ int main( void )
                 wall.draw(shaderID);
         }
         
+        // Draw suzanne model in third person camera mode
+        if (camera.mode == "third")
+        {
+            // Calculate model matrix
+            glm::mat4 translate = Maths::translate(glm::mat4(1.0f), camera.position);
+            glm::mat4 scale = Maths::scale(glm::mat4(1.0f), glm::vec3(0.2f, 0.2f, 0.2f));
+            glm::mat4 rotate = glm::transpose(camera.charDirection.quatToMat());
+            glm::mat4 model = translate * rotate * scale;
+
+            // Send the model matrix to the shader
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &model[0][0]);
+
+            // Draw the model
+            suzanne.draw(shaderID);
+        }
+
         // Draw the light sources
         lightSources.draw(view, projection, lightModel);
-        
+
         // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();

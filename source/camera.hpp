@@ -1,7 +1,10 @@
 #pragma once
 
+#include <iostream>
+
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+
+#include "maths.hpp"
 
 class Camera
 {
@@ -27,12 +30,21 @@ public:
     
     // Speed attributes
     float speed = 5.0f;
-    float mouseSpeed = 0.005f;
+    float mouseSpeed = 0.2f;
     
     // Camera angles
-    const float pi = 3.1415927f;
-    float pitch;
-    float yaw;
+    float pitch = 0.0f;
+    float yaw = 0.0f;
+    float roll = 0.0f;
+
+    // Direction quaternion
+    Quaternion direction;
+
+    // Third person camera
+    glm::vec3 offset = glm::vec3(0.0f, 0.5f, 2.0f);
+    std::string mode = "first";
+    float charYaw = 0.0f;
+    Quaternion charDirection;
     
     // Constructor
     Camera(const glm::vec3 Position);
@@ -41,4 +53,5 @@ public:
     glm::mat4 getViewMatrix();
     glm::mat4 getProjectionMatrix();
     void calculateMatrices(GLFWwindow* window, const float deltaTime);
+    void thirdPersonCamera(GLFWwindow* window, const float deltaTime);
 };
