@@ -75,7 +75,7 @@ void Camera::calculateMatrices(GLFWwindow *window, const float deltaTime)
     front.x = -view[0][2], front.y = -view[1][2], front.z = -view[2][2];
 
     // Calculate projection matrix
-    projection = glm::perspective(fov, aspect, near, far);
+    projection = MyLib::Perspective(fov, aspect, near, far);
 }
 
 void Camera::thirdPersonCamera(GLFWwindow* window, const float deltaTime)
@@ -125,5 +125,5 @@ void Camera::thirdPersonCamera(GLFWwindow* window, const float deltaTime)
     front.x = -charMat[0][2], front.y = -charMat[1][2], front.z = -charMat[2][2];
 
     // Calculate projection matrix
-    projection = glm::perspective(fov, aspect, near, far);
+    projection = MyLib::Perspective(fov, aspect, near, far);
 }

@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "maths.hpp"
+#include "MyLib.h"
 
 class Camera
 {
