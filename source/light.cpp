@@ -9,6 +9,31 @@
 #include "model.hpp"
 #include "light.hpp"
 
+void Light::reorder()
+{
+    std::vector<LightSource> temp;
+    for (unsigned int i = 0; i < lights.size(); i++)
+    {
+        if (lights[i].type == "point")
+            temp.push_back(lights[i]);
+    }
+    for (unsigned int i = 0; i < lights.size(); i++)
+    {
+        if (lights[i].type == "spot")
+            temp.push_back(lights[i]);
+    }
+    for (unsigned int i = 0; i < lights.size(); i++)
+    {
+        if (lights[i].type == "directional")
+            temp.push_back(lights[i]);
+    }
+    lights = temp;
+}
+
+bool Light::isIndexValid(int index) {
+    return (index >= 0 && index < lights.size());
+}
+
 void Light::addPointLight(const glm::vec3 Position, const glm::vec3 Colour)
 {
     LightSource light;
@@ -85,23 +110,10 @@ void Light::draw(glm::mat4 view, glm::mat4 projection, Model lightModel)
     }
 }
 
-void Light::reorder()
-{
-    std::vector<LightSource> temp;
-    for (unsigned int i = 0; i < lights.size(); i++)
-    {
-        if (lights[i].type == "point")
-            temp.push_back(lights[i]);
+void Light::setColour(int index, const glm::vec3 Colour) {
+    if (isIndexValid(index)) {
+        lights[index].colour = Colour;
     }
-    for (unsigned int i = 0; i < lights.size(); i++)
-    {
-        if (lights[i].type == "spot")
-            temp.push_back(lights[i]);
-    }
-    for (unsigned int i = 0; i < lights.size(); i++)
-    {
-        if (lights[i].type == "directional")
-            temp.push_back(lights[i]);
-    }
-    lights = temp;
 }
+
+

@@ -13,6 +13,7 @@
 #include "model.hpp"
 #include "light.hpp"
 #include "maths.hpp"
+#include "MyLib.h"
 
 // Create camera object
 Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
@@ -21,9 +22,16 @@ Camera camera(glm::vec3(0.0f, 1.0f, 5.0f));
 float currentTime = 0.0f;
 float lastTime = 0.0f;
 float deltaTime = 0.0f;
+float cycleTime = 6.3f;
+float currentCycleTime = 0.0f;
+
+float worldFactor = -1.0f;
+
+//proximity stuff
+float currentDistance = 0.0f;
+float triggerDistance = 5.0f;
 
 // Data structures
-
 
 struct Object
 {
@@ -95,7 +103,7 @@ int main( void )
     
     // Load models
     Model teapot("../objects/teapot.obj");
-    Model lightModel("../objects/sphere.obj");
+    Model lightModel("../objects/mouse.obj");
     Model floor("../objects/flat_plane.obj");
     Model wall("../objects/wall.obj");
     Model suzanne("../objects/suzanne.obj");
@@ -138,12 +146,18 @@ int main( void )
     // Define light colours
     glm::vec3 white = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 yellow = glm::vec3(1.0f, 1.0f, 0.0f);
+    glm::vec3 cyan = glm::vec3(0.0f, 1.0f, 1.0f);
+    glm::vec3 pink = glm::vec3(1.0f,0.0f,1.0f);
+    glm::vec3 worldLight = glm::vec3(1.0f, 1.0f, 0.0f);
     
     // Specify light sources
     Light lightSources;
-    lightSources.addPointLight(glm::vec3(2.0f, 2.0f, 2.0f), white);
-    lightSources.addSpotLight(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), white, cos(glm::radians(45.0f)));
-    lightSources.addDirLight(glm::vec3(1.0f, 0.0f, 0.0f), yellow);
+    
+    lightSources.addPointLight(glm::vec3(2.0f, 2.0f, 2.0f), pink);
+    lightSources.addSpotLight(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), cyan, cos(glm::radians(45.0f)));
+    
+    //global day/night light (MUST BE THE LAST ADDED LIGHT TO WORK!!!)
+    lightSources.addDirLight(glm::vec3(1.0f, 0.0f, 0.0f), worldLight);
     
     // Compile light shader program
     lightSources.lightShaderID = LoadShaders("lightVertexShader.vert", "lightFragmentShader.frag");
@@ -153,6 +167,16 @@ int main( void )
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTime;
         lastTime = currentTime;
+
+        if (currentCycleTime >= cycleTime) {
+            currentCycleTime = 0.0f;//resets the current time variable to prevent overflow
+        }
+        else {
+            currentCycleTime += deltaTime;
+        }
+
+
+
 
         // Background colour
         glm::vec3 bgColour = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -201,6 +225,15 @@ int main( void )
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
 
+
+        //update the world light parameters
+        worldFactor = cos(currentCycleTime);
+        worldLight = glm::vec3(worldFactor, worldFactor, worldFactor);
+
+
+        //update colour of directional light
+        lightSources.setColour((lightSources.numDir + lightSources.numPoint + lightSources.numSpot)-1, worldLight);
+
         // Activate shader
         glUseProgram(shaderID);
 
@@ -221,7 +254,19 @@ int main( void )
             // Calculate model matrix
             glm::mat4 translate = Maths::translate(glm::mat4(1.0f), objects[i].position);
             glm::mat4 scale = Maths::scale(glm::mat4(1.0f), objects[i].scale);
-            glm::mat4 rotate = Maths::rotate(glm::mat4(1.0f), objects[i].angle, objects[i].rotation);
+            glm::mat4 rotate;
+            if (objects[i].name == "teapot") {
+
+                //calculate Teapot to Camera distance (or character if in 3rd person)
+                currentDistance = MyLib::Length(objects[i].position - camera.position);
+
+
+                rotate = Maths::rotate(glm::mat4(1.0f), objects[i].angle + (worldFactor * (currentDistance <= triggerDistance)), objects[i].rotation);
+            }
+            else {
+                rotate = Maths::rotate(glm::mat4(1.0f), objects[i].angle, objects[i].rotation);
+            }
+            
             glm::mat4 model = translate * rotate * scale;
 
             // Send the model matrix to the shader

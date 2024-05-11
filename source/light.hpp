@@ -19,6 +19,10 @@ struct LightSource
 
 class Light
 {
+private:
+    void reorder();
+    bool isIndexValid(int index);
+
 public:
     std::vector<LightSource> lights;
     float ka = 0.2f;
@@ -40,6 +44,7 @@ public:
     // Draw light source
     void draw(glm::mat4 view, glm::mat4 projection, Model lightModel);
     
-private:
-    void reorder();
+    void setColour(int index, glm::vec3 Colour);
+
+
 };
