@@ -207,9 +207,9 @@ int main( void )
         for (unsigned int i = 0; i < objects.size(); i++)
         {
             // Calculate model matrix
-            glm::mat4 translate = glm::translate(glm::mat4(1.0f), objects[i].position);
-            glm::mat4 scale = glm::scale(glm::mat4(1.0f), objects[i].scale);
-            glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), objects[i].angle, objects[i].rotation);
+            glm::mat4 translate = Maths::translate(glm::mat4(1.0f), objects[i].position);
+            glm::mat4 scale = Maths::scale(glm::mat4(1.0f), objects[i].scale);
+            glm::mat4 rotate = Maths::rotate(glm::mat4(1.0f), objects[i].angle, objects[i].rotation);
             glm::mat4 model = translate * rotate * scale;
 
             // Send the model matrix to the shader
