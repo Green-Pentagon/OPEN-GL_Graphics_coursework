@@ -39,7 +39,7 @@ struct Object
     glm::vec3 rotation = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
     float angle = 0.0f;
-    float ka = 0.2f;
+    float ka = 0.3f;
     float kd = 0.7f;
     float ks = 1.0f;
     float Ns = 20.0f;
@@ -174,8 +174,6 @@ int main( void )
         else {
             currentCycleTime += deltaTime;
         }
-
-
 
 
         // Background colour
