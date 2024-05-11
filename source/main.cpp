@@ -119,6 +119,8 @@ int main( void )
     Object object;
     object.name = "teapot";
     objects.push_back(object);
+    bool teapotEnabled = true;
+    bool buttonPressedIn = false;
 
     object.name = "floor";
     object.position = glm::vec3(0.0f, -0.85f, 0.0f);
@@ -171,6 +173,15 @@ int main( void )
             camera.mode = "third";
             camera.charYaw = camera.yaw;
         }
+        if (glfwGetKey(window, GLFW_KEY_F) && !buttonPressedIn) {
+
+            teapotEnabled = !teapotEnabled;
+            buttonPressedIn = true;
+
+        }
+        else if ((glfwGetKey(window, GLFW_KEY_F) == GLFW_RELEASE) && buttonPressedIn) {
+            buttonPressedIn = false;
+        }
 
         //// Get the view and projection matrices from the camera library
         //camera.calculateMatrices(window, deltaTime);
@@ -206,6 +217,7 @@ int main( void )
         // Loop through objects
         for (unsigned int i = 0; i < objects.size(); i++)
         {
+            
             // Calculate model matrix
             glm::mat4 translate = Maths::translate(glm::mat4(1.0f), objects[i].position);
             glm::mat4 scale = Maths::scale(glm::mat4(1.0f), objects[i].scale);
@@ -217,12 +229,21 @@ int main( void )
 
             // Send material properties to the shader
             glUniform1f(glGetUniformLocation(shaderID, "ka"), objects[i].ka);
-            glUniform1f(glGetUniformLocation(shaderID, "kd"), objects[i].kd);
-            glUniform1f(glGetUniformLocation(shaderID, "ks"), objects[i].ks);
-            glUniform1f(glGetUniformLocation(shaderID, "Ns"), objects[i].Ns);
+            if (teapotEnabled) {
+                glUniform1f(glGetUniformLocation(shaderID, "kd"), objects[i].kd);
+                glUniform1f(glGetUniformLocation(shaderID, "ks"), objects[i].ks);
+                glUniform1f(glGetUniformLocation(shaderID, "Ns"), objects[i].Ns);
+            }
+            else {
+                glUniform1f(glGetUniformLocation(shaderID, "kd"), 0.0f);
+                glUniform1f(glGetUniformLocation(shaderID, "ks"), 0.0f);
+                glUniform1f(glGetUniformLocation(shaderID, "Ns"), 0.0f);
+            }
+            
+            
 
             // Draw the model
-            if (objects[i].name == "teapot")
+            if (objects[i].name == "teapot" && teapotEnabled)
                 teapot.draw(shaderID);
             if (objects[i].name == "floor")
                 floor.draw(shaderID);
@@ -247,7 +268,10 @@ int main( void )
         }
 
         // Draw the light sources
-        lightSources.draw(view, projection, lightModel);
+        if (teapotEnabled) {
+            lightSources.draw(view, projection, lightModel);
+        }
+            
 
         // Swap buffers
         glfwSwapBuffers(window);
